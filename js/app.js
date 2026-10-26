@@ -160,8 +160,8 @@ function targetPath() {
 }
 
 // MARK: Layout — one column on phones, two panes on wide screens
-const ORDER_WIDE = [["hero", "readoutCard", "nightsCard", "planetsCard", "sunCard", "lpCard", "kpCard", "sources"],
-  ["mapCard", "gridCard", "timelineCard", "targetsCard", "satCard", "cloudCard", "tempCard"]];
+const ORDER_WIDE = [["hero", "readoutCard", "nightsCard", "targetsCard", "planetsCard", "sunCard", "lpCard", "kpCard", "sources"],
+  ["mapCard", "gridCard", "timelineCard", "satCard", "cloudCard", "tempCard"]];
 const ORDER_NARROW = ["hero", "mapCard", "gridCard", "readoutCard", "nightsCard", "targetsCard", "timelineCard", "planetsCard", "satCard", "cloudCard", "tempCard", "sunCard", "lpCard", "kpCard", "sources"];
 let wideNow = null;
 function arrange() {
