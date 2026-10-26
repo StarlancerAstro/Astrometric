@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Astrometric</title>
+<meta name="description" content="Plan astrophotography nights: cloud, transparency, seeing, moon, light pollution and the best targets for your site.">
+<meta name="theme-color" content="#070b16">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Astrometric">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <button class="site" id="siteBtn" aria-label="Change observing site"><b id="siteName">Astrometric</b><small id="updated">Loading forecast…</small></button>
+  <button class="pill clock" id="nowBtn" aria-label="Jump to the current hour"><svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="clock"></span></button>
+  <button class="round" id="starBtn" aria-pressed="false" aria-label="Save this site" hidden><svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
+  <button class="pill" id="redBtn" aria-pressed="false">Red light</button>
+</header>
+<nav class="favs" id="favs" aria-label="Saved sites with tonight's score" hidden></nav>
+<p class="note" id="banner" hidden></p>
+
+<div class="layout" id="layout">
+  <section class="hero" id="hero"></section>
+
+  <section class="card plain" id="mapCard">
+    <h2 class="hd"><span><i class="ic">◌</i>Sky map</span><small>tap a target to plot it</small></h2>
+    <div class="mapWrap"><canvas id="sky" aria-label="Sky map"></canvas></div>
+    <div id="lpLegend"></div>
+    <p class="caption" id="mapCaption"></p>
+    <div class="hourBar" id="hourBar" role="slider" tabindex="0" aria-label="Selected hour">
+      <button id="hourPrev" aria-label="Earlier hour">‹</button><span class="fill" id="hourFill"></span><span id="hourText"></span><button id="hourNext" aria-label="Later hour">›</button>
+    </div>
+    <dl class="kv box" id="skyReadouts" hidden></dl>
+    <div class="contrast" id="contrast" hidden>
+      <label class="switch"><span>Light pollution &amp; local contrast</span><input type="checkbox" id="lpToggle"><i></i></label>
+      <div class="domeRow" id="domeRow"><span>Light domes</span><div class="seg small" role="tablist"><button data-dome="classic">Classic</button><button data-dome="highlighted">Highlighted</button></div></div>
+    </div>
+  </section>
+
+  <section class="card" id="readoutCard"></section>
+
+  <section class="card" id="gridCard">
+    <h2 class="hd"><span><i class="ic">▥</i>Hour by hour</span><small>tap any hour</small></h2>
+    <div class="gridScroll"><table class="chart" id="grid"></table></div>
+    <div class="legend"><span>Best</span><span class="ramp"><i style="background:var(--c1)"></i><i style="background:var(--c2)"></i><i style="background:var(--c3)"></i><i style="background:var(--c4)"></i><i style="background:var(--c5)"></i></span><span>Worst</span></div>
+  </section>
+
+  <section class="card" id="nightsCard"><h2 class="hd"><span><i class="ic">▦</i>Next 7 nights</span><small>tap a night</small></h2><div class="nights" id="nights"></div></section>
+
+  <section class="card" id="timelineCard">
+    <h2 class="hd"><span><i class="ic">∿</i>Night timeline</span><small id="tlNote">tap a target to plot it</small></h2>
+    <div class="plotBox"><svg class="plot" id="plotTL" role="img" aria-label="Sun, moon and target altitude through the night"></svg></div>
+    <div class="legend" id="lgTL"></div>
+  </section>
+
+  <section class="card" id="targetsCard">
+    <h2 class="hd"><span><i class="ic">⌖</i>Suggested imaging targets</span><small>tap to plot · hold to pin</small></h2>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <section class="card" id="planetsCard"><h2 class="hd"><span><i class="ic">◎</i>Planets</span><small>best time tonight</small></h2><dl class="kv box" id="planets"></dl></section>
+
+  <section class="card" id="satCard">
+    <h2 class="hd"><span><i class="ic">☁</i>Satellite clouds</span><small>latest imagery</small></h2>
+    <div class="satCtl"><div class="seg" id="satProduct"><button data-p="GeoColor">GeoColor</button><button data-p="Infrared">Infrared</button></div><div class="seg" id="satZoom"><button data-z="Local">Local</button><button data-z="Regional">Regional</button></div></div>
+    <div class="satBox"><canvas id="satCanvas" width="768" height="768"></canvas><p class="satMsg" id="satMsg"></p></div>
+    <div class="satLoop" id="satLoop"><button class="pill" id="satPlay" aria-label="Pause loop">❚❚</button><div class="dots" id="satDots"></div><span class="satLbl" id="satLbl"></span></div>
+    <div class="satFoot"><small id="satSource"></small><button class="link" id="satRefresh">Refresh</button></div>
+    <p class="how" id="satHow"></p>
+  </section>
+
+  <section class="card" id="cloudCard"><h2 class="hd"><span><i class="ic">☁</i>Cloud layers</span></h2><div class="plotBox"><svg class="plot" id="plotCL" role="img" aria-label="Cloud cover by layer"></svg></div><div class="legend" id="lgCL"></div></section>
+  <section class="card" id="tempCard"><h2 class="hd"><span><i class="ic">🌡︎</i>Temperature &amp; dew</span></h2><div class="plotBox"><svg class="plot" id="plotTD" role="img" aria-label="Temperature and dew point"></svg></div><div class="legend" id="lgTD"></div></section>
+  <section class="card" id="sunCard"><h2 class="hd"><span><i class="ic">☾</i>Sun &amp; moon</span></h2><dl class="kv box" id="sunmoon"></dl></section>
+  <section class="card" id="lpCard"><h2 class="hd"><span><i class="ic">✺</i>Light pollution</span><small>moonless sky overhead</small></h2><dl class="kv box" id="lpInfo"></dl></section>
+  <section class="card" id="kpCard"><h2 class="hd"><span><i class="ic">☀</i>Space weather</span></h2><dl class="kv box" id="spacewx"></dl></section>
+  <section class="sources" id="sources">
+    <p>Clouds matter most; transparency comes from humidity, seeing from the 250 hPa jet stream, wind from ground gusts, and darkness from twilight and the moon. Forecast from <a href="https://open-meteo.com/">Open-Meteo</a> (CC BY 4.0); Kp from NOAA SWPC; light pollution from NASA VIIRS night lights; satellite imagery from NASA GIBS and EUMETSAT; target photos from DSS2 via CDS hips2fits. NGC and IC catalogue: <a href="https://github.com/mattiaverga/OpenNGC">OpenNGC</a> by Mattia Verga (CC BY-SA 4.0); Sharpless and Barnard catalogues via VizieR (CDS); constellation lines from d3-celestial (BSD-3); borders from Natural Earth. Sun, moon and planet positions are calculated in your browser. Saved sites and settings stay on this device.</p>
+  </section>
+</div>
+
+<dialog id="siteDlg" class="sheet">
+  <form method="dialog" class="sheetHead"><b>Observing site</b><button class="link" value="close">Close</button></form>
+  <div class="sheetBody">
+    <form id="searchForm" class="row"><input id="q" type="search" placeholder="Town, park, observatory or star party" autocomplete="off" aria-label="Search for a place"><button class="btn">Search</button></form>
+    <div class="row"><button class="btn ghost" id="geoBtn" type="button">Use my location</button><button class="btn ghost" id="sampleBtn" type="button">Sample sky</button></div>
+    <p class="err" id="siteErr" hidden></p>
+    <div class="list" id="results"></div>
+    <h3 class="eyebrow" id="favHead" hidden>Saved sites</h3>
+    <div class="list" id="favList"></div>
+    <h3 class="eyebrow">Star parties</h3>
+    <div class="list" id="partyList"></div>
+    <h3 class="eyebrow">Enter coordinates</h3>
+    <form id="coordForm" class="coords">
+      <input id="cName" placeholder="Name (e.g. Back pasture)" aria-label="Site name">
+      <div class="row"><input id="cLat" placeholder="Latitude" inputmode="decimal" aria-label="Latitude"><input id="cLon" placeholder="Longitude" inputmode="decimal" aria-label="Longitude"></div>
+      <div class="row"><button class="btn">Go</button><button class="btn ghost" type="button" id="coordSave">Save &amp; go</button></div>
+      <p class="how">Decimal degrees. West longitudes are negative (e.g. 40.048, -90.153), or type 90.153 W.</p>
+    </form>
+  </div>
+</dialog>
+
+<dialog id="addDlg" class="sheet">
+  <form method="dialog" class="sheetHead"><b id="addTitle">Add target</b><button class="link" value="close">Close</button></form>
+  <div class="sheetBody">
+    <form id="addForm" class="row"><input id="tq" type="search" placeholder="M31, NGC 7000, Sh2-155, B 33, Horsehead…" autocomplete="off" autocapitalize="sentences" aria-label="Target name"></form>
+    <p class="how" id="addHow"></p>
+    <div class="list" id="addResults"></div>
+  </div>
+</dialog>
+
+<div class="menu" id="menu" hidden></div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
