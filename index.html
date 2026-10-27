@@ -117,6 +117,12 @@
 </dialog>
 
 <div class="menu" id="menu" hidden></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!-- Red mode: images keep only their brightness, shown in deep red (no pink highlights, no white). -->
+  <filter id="nightRed" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="0.19 0.62 0.06 0 0  0.016 0.05 0.005 0 0  0.011 0.036 0.004 0 0  0 0 0 1 0"/>
+  </filter>
+</svg>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>
