@@ -142,6 +142,8 @@ export function hourAt(f, t) { const k = Math.floor((t - f.hours[0].t) / 3600); 
 export function buildNights(f, site, { max = 7, extra = [], dewSpread = 3, catalog = [] } = {}) {
   const nights = [], now = Date.now() / 1000;
   let first = f.midnights.findIndex(m => m + 36 * 3600 > now); if (first < 0) first = 0;
+  // Once morning nautical twilight is over (past midnight, sun above −12°), last night is done: start with the coming one.
+  if (first + 2 < f.midnights.length && now > f.midnights[first + 1] && A.sunAlt(now, site.lat, site.lon) >= -12) first++;
   for (let i = first; i < Math.min(first + max, f.midnights.length - 1); i++) {
     const start = f.midnights[i] + 12 * 3600, end = start + 86400, sm = [];
     for (let t = start; t <= end; t += 300) sm.push({ t, s: A.sunAlt(t, site.lat, site.lon), m: A.moonAlt(t, site.lat, site.lon) });

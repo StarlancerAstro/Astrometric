@@ -107,7 +107,7 @@ function pickNearestHour(t) {
   const h = g.reduce((b, x) => Math.abs(x.t - t) < Math.abs(b.t - t) ? x : b);
   if (h.t !== S.selHour) { S.selHour = h.t; renderHour(); }
 }
-/** The night and hour that contain now; in the daytime (30 min after sunrise until sunset) the coming night's sunset hour. */
+/** The night and hour that contain now; in the daytime (after morning nautical twilight until sunset) the coming night's sunset hour. */
 function nowTarget() {
   const now = Date.now() / 1000;
   let k = S.nights.findIndex(n => now >= n.start && now < n.end); if (k < 0) k = S.nights.length ? 0 : -1;
