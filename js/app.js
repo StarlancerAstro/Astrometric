@@ -394,26 +394,30 @@ function renderContrast() {
 
 // MARK: Satellite loop
 const SAT = { frames: [], i: 0, playing: true, token: 0, info: {}, timer: null };
-async function loadSatellite() {
+async function loadSatellite(refresh = false) {
   const st = site(), token = ++SAT.token;
-  SAT.frames = []; SAT.i = 0; drawSat();
+  if (!refresh) { SAT.frames = []; SAT.i = 0; drawSat(); }
   const gc = geoColorAvailable(st);
   $("satProduct").hidden = !gc;
   document.querySelectorAll("[data-p]").forEach(b => b.setAttribute("aria-selected", b.dataset.p === S.satProduct));
   document.querySelectorAll("[data-z]").forEach(b => b.setAttribute("aria-selected", b.dataset.z === S.satZoom));
-  const setStatus = s => { if (token === SAT.token) { $("satMsg").hidden = !s; $("satMsg").textContent = s || ""; } };
+  const setStatus = s => { if (token === SAT.token && !(refresh && s === "Loading satellite images…")) { $("satMsg").hidden = !s; $("satMsg").textContent = s || ""; } };
   SAT.info = await loadLoop(st, gc ? S.satProduct : "Infrared", S.satZoom, (fr, newest) => {
     if (token !== SAT.token) return;
     SAT.frames = fr.slice(); if (newest || !SAT.playing) SAT.i = SAT.frames.length - 1; drawSat();
   }, setStatus, () => token !== SAT.token) || {};
   if (token !== SAT.token) return;
   $("satSource").textContent = SAT.info.source || "";
-  $("satHow").textContent = SAT.info.note || (SAT.info.infraredOnly
+  const stale = SAT.info.staleSince ? `NASA's satellite feed hasn't updated since ${S.fmt.time(SAT.info.staleSince)} (${ago(SAT.info.staleSince)}), so these are the latest images it has. ` : "";
+  $("satHow").textContent = stale + (SAT.info.note || (SAT.info.infraredOnly
     ? "Outside the Americas only infrared is available. The whiter the cloud, the colder and higher its top; low cloud and fog can look faint."
     : SAT.info.product === "GeoColor" ? "GeoColor is true colour by day; after dark it shows infrared cloud over city lights. Low cloud and fog can be hard to see at night."
-      : "Infrared shows cloud day and night: the whiter the cloud, the colder and higher its top. Low cloud is close to ground temperature and can look faint.");
+      : "Infrared shows cloud day and night: the whiter the cloud, the colder and higher its top. Low cloud is close to ground temperature and can look faint."));
+  SAT.loaded = Date.now();
   playSat();
 }
+/** "25m ago", "6h 10m ago". */
+function ago(t) { const m = Math.max(0, Math.round((Date.now() / 1000 - t) / 60)); return m < 90 ? `${m}m ago` : `${Math.floor(m / 60)}h ${m % 60}m ago`; }
 function playSat() {
   clearTimeout(SAT.timer);
   if (!SAT.playing || SAT.frames.length < 2) return;
@@ -436,7 +440,7 @@ function drawSat() {
     ctx.fillStyle = css(theme().fg); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(name, m, m + 39);
   });
   $("satDots").innerHTML = SAT.frames.map((_, k) => `<i data-k="${k}" class="${k === SAT.i ? "on" : ""}"></i>`).join("");
-  $("satLbl").textContent = `${S.fmt.time(fr.t)} · ${Math.round((Date.now() / 1000 - fr.t) / 60)}m ago`;
+  $("satLbl").textContent = fr.t ? `${S.fmt.time(fr.t)} · ${ago(fr.t)}` : "Latest image";
   $("satPlay").textContent = SAT.playing ? "❚❚" : "▶"; $("satPlay").setAttribute("aria-label", SAT.playing ? "Pause loop" : "Play loop");
 }
 
@@ -626,9 +630,11 @@ function wire() {
   $("satZoom").onclick = e => { const b = e.target.closest("[data-z]"); if (b) { S.satZoom = b.dataset.z; LS.set("satZoom", S.satZoom); loadSatellite(); } };
   $("satPlay").onclick = () => { SAT.playing = !SAT.playing; drawSat(); playSat(); };
   $("satDots").onclick = e => { const d = e.target.closest("[data-k]"); if (d) { SAT.playing = false; SAT.i = +d.dataset.k; clearTimeout(SAT.timer); drawSat(); } };
-  $("satRefresh").onclick = loadSatellite;
+  $("satRefresh").onclick = () => loadSatellite();
 
   let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { arrange(); renderTop(); if (night()) renderHour(); }, 120); });
+  // New satellite frames arrive every 10 minutes; reload the loop while the page is in view.
+  setInterval(() => { if (!document.hidden && SAT.loaded && Date.now() - SAT.loaded > 10 * 60e3) loadSatellite(true); }, 60e3);
   setInterval(() => { $("clock").textContent = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }, 15000);
   $("clock").textContent = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   document.addEventListener("visibilitychange", () => { if (!document.hidden && S.forecast && Date.now() - S.forecast.fetched > 30 * 60e3 && S.mode !== "sample") load(); });

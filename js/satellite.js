@@ -16,8 +16,9 @@ const merc = (lat, lon, world) => { const phi = lat * Math.PI / 180; return [(lo
 const img = (url, cors = true) => new Promise(res => { const i = new Image(); if (cors) i.crossOrigin = "anonymous"; i.onload = () => res(i); i.onerror = () => res(null); i.src = url; });
 const iso = d => new Date(d).toISOString().replace(/\.\d{3}Z$/, "Z");
 
+// Looks back a day, so when NASA's feed stalls the loop still shows its latest real frames, with their true times.
 async function times(layer, tms) {
-  const end = Date.now(), start = end - 4 * 3600e3;
+  const end = Date.now(), start = end - 24 * 3600e3;
   try {
     const xml = await (await fetch(`${BASE}/1.0.0/${layer}/default/${tms}/all/${iso(start)}--${iso(end)}.xml`)).text();
     const m = xml.match(/<Domain>([\s\S]*?)<\/Domain>/); if (!m) return [];
@@ -90,11 +91,12 @@ export async function loadLoop(site, product, zoomName, onFrame, setStatus, canc
   }
   let prod = sat.goes ? product : "Infrared", note = null;
   if (prod === "GeoColor") {
-    const gt = await times(`${sat.name}_ABI_GeoColor`, "GoogleMapsCompatible_Level7");
-    const age = gt.length ? (Date.now() - gt[gt.length - 1]) / 1000 : Infinity;
-    if (age > 90 * 60) {
-      prod = "Infrared";
-      note = isFinite(age) ? `NASA's GeoColor feed is ${Math.floor(age / 3600)} h behind, so this is the live infrared loop instead.` : "NASA's GeoColor feed isn't updating right now, so this is the live infrared loop instead.";
+    // Switch to infrared only when GeoColor is behind and infrared is clearly fresher.
+    const newest = ts => ts.length ? ts[ts.length - 1] : -Infinity;
+    const gc = newest(await times(`${sat.name}_ABI_GeoColor`, "GoogleMapsCompatible_Level7"));
+    if (Date.now() - gc > 90 * 60e3) {
+      const ir = newest(await times(`${sat.name}_ABI_Band13_Clean_Infrared`, "GoogleMapsCompatible_Level6"));
+      if (ir - gc > 30 * 60e3) { prod = "Infrared"; note = "NASA's GeoColor feed is behind, so this is the infrared loop instead."; }
     }
   }
   const layer = sat.name === "Himawari" ? "Himawari_AHI_Band13_Clean_Infrared" : `${sat.name}_${prod === "GeoColor" ? "ABI_GeoColor" : "ABI_Band13_Clean_Infrared"}`;
@@ -105,10 +107,11 @@ export async function loadLoop(site, product, zoomName, onFrame, setStatus, canc
   if (cancelled()) return info;
   if (!ts.length) {
     const c = await mosaic(layer, null, tms, z, maxZ, site.lat, site.lon, view);
-    if (c) { frames.push({ t: Date.now() / 1000, img: finish(c) }); setStatus(null); onFrame(frames, true); }
+    if (c) { frames.push({ t: null, img: finish(c) }); setStatus(null); onFrame(frames, true); }
     else setStatus("Satellite images couldn't load. Check your connection and try again.");
     return info;
   }
+  if (Date.now() - ts[ts.length - 1] > 60 * 60e3) info.staleSince = ts[ts.length - 1] / 1000;
   for (const [k, t] of [...ts].reverse().entries()) {
     if (cancelled()) return info;
     const c = await mosaic(layer, t, tms, z, maxZ, site.lat, site.lon, view);
