@@ -3,7 +3,7 @@ import * as A from "./astro.js";
 import { magOf } from "./data.js";
 import { css, contrastRGB, redLike, skyRGB, mix } from "./theme.js";
 
-const point = (p, c, R) => { const r = (90 - p.alt) / 90 * R, a = p.az * A.rad; return { x: c.x - r * Math.sin(a), y: c.y - r * Math.cos(a) }; };
+const point = (p, c, R) => { const r = (90 - p.alt) / 90 * R, a = p.az * A.rad; return { x: c.x + r * Math.sin(a), y: c.y - r * Math.cos(a) }; };
 const hit = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 const PLANET_COLOR = { Mercury: "#d9d9d9", Venus: "#fff8d9", Mars: "#ff8c66", Jupiter: "#ffebc7", Saturn: "#f5e09e" };
 const PLANET_SIZE = { Venus: 9, Jupiter: 8, Mars: 6.5, Saturn: 6.5, Mercury: 5.5 };
@@ -29,7 +29,7 @@ export function drawSkyMap(canvas, o) {
   for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
     const dx = (i + 0.5) / n * 2 - 1, dy = (j + 0.5) / n * 2 - 1, r = Math.hypot(dx, dy);
     if (r > 1.03) continue;
-    let az = Math.atan2(-dx, -dy) / A.rad; if (az < 0) az += 360;
+    let az = Math.atan2(dx, -dy) / A.rad; if (az < 0) az += 360;
     const p = { alt: Math.max(0.5, 90 * (1 - Math.min(r, 1))), az };
     samples[j * n + i] = [field.darkness(p), p];
   }
@@ -113,7 +113,7 @@ export function drawSkyMap(canvas, o) {
   ctx.setLineDash([]);
   ctx.strokeStyle = css(th.line); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(c.x, c.y, R, 0, 2 * Math.PI); ctx.stroke();
   ctx.font = "bold 12px system-ui"; ctx.fillStyle = css(th.muted); ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  for (const [l, az] of [["N", 0], ["E", 90], ["S", 180], ["W", 270]]) { const a = az * A.rad, r = R + 10; ctx.fillText(l, c.x - r * Math.sin(a), c.y - r * Math.cos(a)); }
+  for (const [l, az] of [["N", 0], ["E", 90], ["S", 180], ["W", 270]]) { const a = az * A.rad, r = R + 10; ctx.fillText(l, c.x + r * Math.sin(a), c.y - r * Math.cos(a)); }
 
   // Selected target's track
   const dk = point(o.darkest, c, R);
@@ -216,11 +216,11 @@ export function drawSkyMap(canvas, o) {
   if (lp) {
     for (const d of lp.domes) {
       if (o.contrast && o.domeStyle === "highlighted") {
-        const share = d.strength / (d.strength + 3), half = (6 + 10 * share) * A.rad, mid = -Math.PI / 2 - d.az * A.rad;
+        const share = d.strength / (d.strength + 3), half = (6 + 10 * share) * A.rad, mid = d.az * A.rad - Math.PI / 2;
         ctx.strokeStyle = `rgba(242,51,38,${0.5 + 0.45 * share})`; ctx.lineWidth = 1.5 + 2 * share; ctx.lineCap = "round";
         ctx.beginPath(); ctx.arc(c.x, c.y, R + 5, mid - half, mid + half); ctx.stroke();
       } else {
-        const a = d.az * A.rad, ux = -Math.sin(a), uy = -Math.cos(a);
+        const a = d.az * A.rad, ux = Math.sin(a), uy = -Math.cos(a);
         const tip = { x: c.x + ux * (R + 2), y: c.y + uy * (R + 2) }, base = { x: c.x + ux * (R + 11), y: c.y + uy * (R + 11) };
         ctx.fillStyle = "rgb(230,38,31)"; ctx.beginPath(); ctx.moveTo(tip.x, tip.y);
         ctx.lineTo(base.x - uy * 5, base.y + ux * 5); ctx.lineTo(base.x + uy * 5, base.y - ux * 5); ctx.closePath(); ctx.fill();
