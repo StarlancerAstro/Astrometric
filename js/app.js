@@ -4,7 +4,7 @@ import * as D from "./data.js";
 import * as C from "./catalog.js";
 import { drawSkyMap } from "./skymap.js";
 import { timeline, cloudChart, tempChart, hourGrid } from "./charts.js";
-import { loadLoop, drawBorders, geoColorAvailable } from "./satellite.js";
+import { loadLoop, drawBorders, geoColorAvailable, nightImage } from "./satellite.js";
 import { THEMES, applyCSS, css, scoreColor, barColor, contrastRGB } from "./theme.js";
 
 const $ = id => document.getElementById(id);
@@ -409,10 +409,8 @@ async function loadSatellite(refresh = false) {
   if (token !== SAT.token) return;
   $("satSource").textContent = SAT.info.source || "";
   const stale = SAT.info.staleSince ? `NASA's satellite feed hasn't updated since ${S.fmt.time(SAT.info.staleSince)} (${ago(SAT.info.staleSince)}), so these are the latest images it has. ` : "";
-  $("satHow").textContent = stale + (SAT.info.note || (SAT.info.infraredOnly
-    ? "Outside the Americas only infrared is available. The whiter the cloud, the colder and higher its top; low cloud and fog can look faint."
-    : SAT.info.product === "GeoColor" ? "GeoColor is true colour by day; after dark it shows infrared cloud over city lights. Low cloud and fog can be hard to see at night."
-      : "Infrared shows cloud day and night: the whiter the cloud, the colder and higher its top. Low cloud is close to ground temperature and can look faint."));
+  const outside = SAT.info.infraredOnly ? "GeoColor covers only the Americas. " : "";
+  $("satHow").textContent = stale + (SAT.info.note ? SAT.info.note + " " : outside) + (SAT.info.how || "");
   SAT.loaded = Date.now();
   playSat();
 }
@@ -429,7 +427,7 @@ function drawSat() {
   ctx.clearRect(0, 0, c.width, c.height);
   $("satLoop").hidden = !SAT.frames.length;
   if (!fr) return;
-  ctx.drawImage(fr.img, 0, 0, c.width, c.height);
+  ctx.drawImage(S.red ? (fr.night ??= nightImage(fr.img, fr.band)) : fr.img, 0, 0, c.width, c.height);
   const st = site();
   drawBorders(ctx, st, SAT.info.zoom || (S.satZoom === "Local" ? 7 : 5), c.width, css(theme().fg)).then(() => {
     const m = c.width / 2;
