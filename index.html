@@ -82,7 +82,7 @@
   <section class="card" id="lpCard"><h2 class="hd"><span><i class="ic">✺</i>Light pollution</span><small>moonless sky overhead</small></h2><dl class="kv box" id="lpInfo"></dl></section>
   <section class="card" id="kpCard"><h2 class="hd"><span><i class="ic">☀</i>Space weather</span></h2><dl class="kv box" id="spacewx"></dl></section>
   <section class="sources" id="sources">
-    <p>Clouds matter most; transparency comes from humidity, seeing from the 250 hPa jet stream, wind from ground gusts, and darkness from twilight and the moon. Forecast from <a href="https://open-meteo.com/">Open-Meteo</a> (CC BY 4.0); Kp from NOAA SWPC; light pollution from NASA VIIRS night lights; satellite imagery from NASA GIBS and EUMETSAT; target photos from DSS2 via CDS hips2fits. NGC and IC catalogue: <a href="https://github.com/mattiaverga/OpenNGC">OpenNGC</a> by Mattia Verga (CC BY-SA 4.0); Sharpless and Barnard catalogues via VizieR (CDS); constellation lines from d3-celestial (BSD-3); borders from Natural Earth. Sun, moon and planet positions are calculated in your browser. Saved sites and settings stay on this device.</p>
+    <p>Clouds matter most; transparency comes from humidity, seeing from the 250 hPa jet stream, wind from ground gusts, and darkness from twilight and the moon. Forecast from <a href="https://open-meteo.com/">Open-Meteo</a> (CC BY 4.0); Kp from NOAA SWPC; light pollution from NASA VIIRS night lights; satellite imagery from NASA GIBS and EUMETSAT; target photos from the Digitized Sky Survey 2 (STScI/AURA, Palomar/Caltech, UK Schmidt), bundled for popular targets and fetched from CDS hips2fits or NASA SkyView for the rest. NGC and IC catalogue: <a href="https://github.com/mattiaverga/OpenNGC">OpenNGC</a> by Mattia Verga (CC BY-SA 4.0); Sharpless and Barnard catalogues via VizieR (CDS); constellation lines from d3-celestial (BSD-3); borders from Natural Earth. Sun, moon and planet positions are calculated in your browser. Saved sites and settings stay on this device.</p>
   </section>
 </div>
 
@@ -117,12 +117,6 @@
 </dialog>
 
 <div class="menu" id="menu" hidden></div>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <!-- Red mode: images keep only their brightness, shown in deep red (no pink highlights, no white). -->
-  <filter id="nightRed" color-interpolation-filters="sRGB">
-    <feColorMatrix type="matrix" values="0.19 0.62 0.06 0 0  0.016 0.05 0.005 0 0  0.011 0.036 0.004 0 0  0 0 0 1 0"/>
-  </filter>
-</svg>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>

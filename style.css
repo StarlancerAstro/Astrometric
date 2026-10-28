@@ -142,7 +142,9 @@ table.chart .gap { height: 5px; cursor: default; }
 .tile .ph { aspect-ratio: 1; border-radius: 8px; background: var(--bg) center/cover no-repeat; position: relative; overflow: hidden; }
 .tile .ph img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .3s; }
 .tile .ph img.ok { opacity: 1; }
-html.red .tile .ph img { filter: url(#nightRed); }
+/* Red mode: greyscale images multiplied by a deep red, so black stays black and white becomes red (never pink). */
+html.red .tile .ph img, html.red .satBox canvas { filter: grayscale(1) contrast(1.1); }
+html.red .tile .ph::after, html.red .satBox::after { content: ""; position: absolute; inset: 0; background: #a81c10; mix-blend-mode: multiply; pointer-events: none; }
 .tile .tag { position: absolute; top: 5px; left: 5px; font-size: 10px; font-weight: 700; color: var(--accent); background: color-mix(in srgb, var(--bg) 75%, transparent); border-radius: 999px; padding: 1px 6px; }
 .tile .l1 { display: flex; justify-content: space-between; gap: 4px; font-size: 14px; font-weight: 600; }
 .tile .l1 span:last-child { font-family: var(--f-mono); font-size: 12px; font-weight: 400; color: var(--muted); white-space: nowrap; }
@@ -156,8 +158,7 @@ html.red .tile .ph img { filter: url(#nightRed); }
 .satCtl .seg { flex: 1; }
 .satBox { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: var(--inset); display: flex; align-items: center; justify-content: center; }
 .satBox canvas { width: 100%; height: 100%; display: block; }
-html.red .satBox canvas { filter: url(#nightRed); }
-.satMsg { position: absolute; inset: 0; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px; color: var(--muted); font-size: 13px; }
+.satMsg { z-index: 1; position: absolute; inset: 0; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px; color: var(--muted); font-size: 13px; }
 .satLoop { display: flex; align-items: center; gap: 10px; }
 .satLoop .pill { width: 40px; justify-content: center; padding: 5px 0; font-size: 11px; }
 .dots { flex: 1; display: flex; gap: 3px; }

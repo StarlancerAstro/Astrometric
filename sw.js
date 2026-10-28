@@ -1,5 +1,5 @@
 // Offline support: the app and its catalogues are cached; forecasts and imagery always come from the network.
-const CACHE = "astrometric-v2";
+const CACHE = "astrometric-v4";
 const SHELL = ["./", "index.html", "style.css", "manifest.webmanifest", "favicon.png", "icon-192.png", "apple-touch-icon.png",
   "js/app.js", "js/astro.js", "js/data.js", "js/catalog.js", "js/skymap.js", "js/charts.js", "js/satellite.js", "js/theme.js",
   "data/NGCIC.json", "data/Messier.json", "data/Constellations.json", "data/Borders.json"];

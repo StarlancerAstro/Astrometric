@@ -41,10 +41,16 @@ export function fieldOfView(d) {
   if (s) return Math.min(Math.max(s / 60 * 1.8, 0.08), 2.5);
   return defaultFOV(d.type);
 }
-export function previewURL(d, px) {
-  const q = new URLSearchParams({ hips: "CDS/P/DSS2/color", width: px, height: px, fov: fieldOfView(d), projection: "TAN", coordsys: "icrs", ra: d.raH * 15, dec: d.decD, format: "jpg" });
-  return "https://alasky.cds.unistra.fr/hips-image-services/hips2fits?" + q;
+/** Photo sources for a target, best first: the bundled photo (popular targets), CDS hips2fits in colour, then NASA
+ *  SkyView's red plate (greyscale, but quick and on a separate service). */
+export function previewURLs(d, px) {
+  const fov = fieldOfView(d), out = [];
+  if (BUNDLED.has(d.id)) out.push("data/previews/" + d.id.replace(/ /g, "_") + ".jpg");
+  out.push("https://alasky.cds.unistra.fr/hips-image-services/hips2fits?" + new URLSearchParams({ hips: "CDS/P/DSS2/color", width: px, height: px, fov, projection: "TAN", coordsys: "icrs", ra: d.raH * 15, dec: d.decD, format: "jpg" }));
+  out.push("https://skyview.gsfc.nasa.gov/current/cgi/runquery.pl?" + new URLSearchParams({ Position: `${d.raH * 15},${d.decD}`, Survey: "DSS2 Red", Pixels: px, Size: fov, Return: "JPEG" }));
+  return out;
 }
+let BUNDLED = new Set();
 
 // MARK: Bundled catalogues
 const TYPE_NAMES = {
@@ -56,7 +62,9 @@ const NB = new Set(["HII", "EmN", "PN", "SNR", "Cl+N"]);
 let ALL = [], BY_ID = new Map(), BY_M = new Map(), MESSIER = [];
 
 export async function loadCatalogs() {
-  const [ngc, mes] = await Promise.all([fetch("data/NGCIC.json").then(r => r.json()), fetch("data/Messier.json").then(r => r.json())]);
+  const [ngc, mes, bundled] = await Promise.all([fetch("data/NGCIC.json").then(r => r.json()), fetch("data/Messier.json").then(r => r.json()),
+    fetch("data/previews.json").then(r => r.json()).catch(() => [])]);
+  BUNDLED = new Set(bundled);
   ALL = ngc.objects.map(r => {
     const id = r[0], parts = id.startsWith("Sh2-") ? ["Sh2", id.slice(4)] : id.split(/ (.*)/s);
     const e = { id, cat: parts[0], number: (parts[1] || "").toUpperCase(), raH: r[1], decD: r[2], code: r[3], size: r[4] || null, mag: r[5], name: r[6] || "", messier: r[7] || "", sameAs: r[8] || "" };

@@ -319,13 +319,28 @@ function renderReadout() {
 }
 
 const hrs = D.hrs;
+/** A target photo that falls back through its sources (bundled, then online) if one fails or takes over 12 s. */
+function photo(d) {
+  const urls = C.previewURLs(d, 240);
+  return `<img loading="lazy" alt="" src="${esc(urls[0])}" data-next="${esc(JSON.stringify(urls.slice(1)))}" onload="this.classList.add('ok')" onerror="nextPhoto(this)">`;
+}
+window.nextPhoto = img => {
+  const rest = JSON.parse(img.dataset.next || "[]");
+  if (!rest.length) { img.remove(); return; }
+  img.dataset.next = JSON.stringify(rest.slice(1)); img.src = rest[0];
+};
+// Online photo services can hang rather than fail; move on after 12 s.
+setInterval(() => document.querySelectorAll(".tile img:not(.ok)").forEach(img => {
+  if (!img.complete && img.dataset.since && Date.now() - img.dataset.since > 12000 && !img.src.includes("data/previews")) { img.dataset.since = Date.now(); nextPhoto(img); }
+  else if (!img.dataset.since) img.dataset.since = Date.now();
+}), 3000);
 function renderTiles() {
   const n = night(), list = targetList(n);
   $("tiles").innerHTML = list.map(t => {
     const pinned = isPinned(t.id), custom = isCustom(t.id);
     const tag = [custom ? "★" : pinned ? "📌︎" : "", t.dso.nb ? "NB" : ""].filter(Boolean).join(" ");
     const clear = t.above >= 1800 ? hrs(t.clear) : t.max > 0 ? "low" : "not up";
-    return `<button class="tile" data-id="${esc(t.id)}" aria-selected="${S.selTarget === t.id}"><span class="ph"><img loading="lazy" alt="" src="${C.previewURL(t.dso, 240)}" onload="this.classList.add('ok')"></span>
+    return `<button class="tile" data-id="${esc(t.id)}" aria-selected="${S.selTarget === t.id}"><span class="ph">${photo(t.dso)}</span>
       ${tag ? `<span class="tag">${tag}</span>` : ""}<span class="l1"><span>${esc(t.id)}</span><span>${clear}</span></span><span class="l2">${esc(t.dso.name)}</span></button>`;
   }).join("") + `<button class="tile add" id="addTile"><span class="ph">+</span><span class="l1"><span>${S.custom ? "Change target" : "Add target"}</span></span><span class="l2">${S.custom ? "replaces " + esc(S.custom.id) : "M, NGC, IC, Sh2, B"}</span></button>`;
   if (!list.length) $("tiles").insertAdjacentHTML("afterbegin", `<p class="how" style="grid-column:1/-1">No listed targets reach 30° during darkness tonight.</p>`);
